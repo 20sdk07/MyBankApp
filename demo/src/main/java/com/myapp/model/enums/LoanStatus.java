@@ -1,3 +1,4 @@
+
 package com.myapp.model.enums;
 
 public enum LoanStatus {
@@ -7,4 +8,5 @@ public enum LoanStatus {
     
     
 }
+
     

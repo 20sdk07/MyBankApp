@@ -1,3 +1,4 @@
+
 package com.myapp.model.enums;
 
 public enum TransactionType {
@@ -6,3 +7,4 @@ public enum TransactionType {
     WITHDRAWAL // Para çekme
     
 }
+

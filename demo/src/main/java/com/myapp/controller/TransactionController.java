@@ -23,7 +23,7 @@ public class TransactionController {
     // Tüm işlemleri listele
     public void showAllTransactions() {
         List<Transaction> transactions = transactionService.getAllTransactions();
-        if (transactions.isEmpty()) {
+        if (transactions == null || transactions.isEmpty()) { // Null kontrolü eklendi
             System.out.println("Henüz hiç işlem yapılmamış.");
         } else {
             for (Transaction tx : transactions) {
@@ -35,16 +35,23 @@ public class TransactionController {
     // Belirli bir hesabın işlemlerini göster
     public void showTransactionsForAccount() {
         System.out.print("İşlemlerini görmek istediğiniz hesap ID'sini girin: ");
-        long accountId = scanner.nextLong();
+        if (!scanner.hasNextLong()) { // Kullanıcı girişinin geçerli bir sayı olup olmadığını kontrol et
+            System.out.println("Geçersiz hesap ID'si girdiniz!");
+            scanner.next(); // Hatalı girdiyi temizle
+            return;
+        }
 
-        Account account = accountService.findById(accountId);
+        long accountId = scanner.nextLong();
+        scanner.nextLine(); // Giriş tamponunu temizle
+
+        Account account = accountService.findById(accountId).orElse(null);
         if (account == null) {
             System.out.println("Hesap bulunamadı!");
             return;
         }
 
         List<Transaction> txList = transactionService.getTransactionsForAccount(account);
-        if (txList.isEmpty()) {
+        if (txList == null || txList.isEmpty()) { // Null kontrolü eklendi
             System.out.println("Bu hesaba ait işlem bulunamadı.");
         } else {
             for (Transaction tx : txList) {
