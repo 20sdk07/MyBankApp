@@ -35,9 +35,11 @@ public class TransactionService {
         transaction.setType(TransactionType.TRANSFER);
 
         // Hesaplardan bakiye düşme
-        if (from.getBalance().compareTo(amount) >= 0) { // BigDecimal karşılaştırması
-            from.setBalance(from.getBalance().subtract(amount)); // BigDecimal çıkarma
-            to.setBalance(to.getBalance().add(amount)); // BigDecimal toplama
+
+        if (from.getBalance().compareTo(amount) >= 0) {
+            from.setBalance(from.getBalance().subtract(amount));
+            to.setBalance(to.getBalance().add(amount));
+
             transaction.setStatus(TransactionStatus.SUCCESS);
         } else {
             transaction.setStatus(TransactionStatus.FAILED);
