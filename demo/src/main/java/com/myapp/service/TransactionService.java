@@ -1,15 +1,14 @@
 package com.myapp.service;
 
 import java.math.BigDecimal;
-
-import com.myapp.model.Transaction;
-import com.myapp.model.enums.TransactionStatus;
-import com.myapp.model.enums.TransactionType;
-import com.myapp.model.Account;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.myapp.model.Account;
+import com.myapp.model.Transaction;
+import com.myapp.model.enums.TransactionStatus;
+import com.myapp.model.enums.TransactionType;
 
 public class TransactionService {
 
@@ -27,9 +26,9 @@ public class TransactionService {
         transaction.setType(TransactionType.TRANSFER);
 
         // Hesaplardan bakiye düşme
-        if (from.getBalance() >= amount) {
-            from.setBalance(from.getBalance() - amount);
-            to.setBalance(to.getBalance() + amount);
+        if (from.getBalance().compareTo(amount) >= 0) {
+            from.setBalance(from.getBalance().subtract(amount));
+            to.setBalance(to.getBalance().add(amount));
             transaction.setStatus(TransactionStatus.SUCCESS);
         } else {
             transaction.setStatus(TransactionStatus.FAILED);
