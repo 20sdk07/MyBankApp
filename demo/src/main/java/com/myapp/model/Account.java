@@ -2,25 +2,26 @@ package com.myapp.model;
 
 import java.math.BigDecimal;
 
-import com.myapp.model.enums.AccountStatus;
-
 public class Account {
-    private int accountNumber;
+    private int id;
+    private String ownerName;
     private BigDecimal balance;
-    private AccountStatus status;
 
-    public Account(int accountNumber, BigDecimal balance, AccountStatus status) {
-        this.accountNumber = accountNumber;
-        this.balance = balance;
-        this.status = status;
+    // Getters and Setters
+    public int getId() {
+        return id;
     }
 
-    public int getAccountNumber() {
-        return accountNumber;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public void setAccountNumber(int accountNumber) {
-        this.accountNumber = accountNumber;
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
     }
 
     public BigDecimal getBalance() {
@@ -29,13 +30,5 @@ public class Account {
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
-    }
-
-    public AccountStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(AccountStatus status) {
-        this.status = status;
     }
 }
