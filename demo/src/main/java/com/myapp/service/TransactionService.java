@@ -9,13 +9,17 @@ import com.myapp.model.Account;
 import com.myapp.model.Transaction;
 import com.myapp.model.enums.TransactionStatus;
 import com.myapp.model.enums.TransactionType;
+import com.myapp.repository.TransactionRepository;
 
 public class TransactionService {
 
-    private final List<Transaction> transactions = new ArrayList<>();
+    private final TransactionRepository transactionRepository;
     private int transactionIdCounter = 1;
 
-    // Yeni işlem (transfer) oluşturur
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
     public Transaction transfer(Account from, Account to, BigDecimal amount) {
         // Null kontrolleri
         if (from == null || to == null) {
@@ -27,14 +31,14 @@ public class TransactionService {
         }
 
         Transaction transaction = new Transaction();
-        transaction.setId(transactionIdCounter++);
+        transaction.setId (transactionIdCounter);
         transaction.setFromAccount(from);
         transaction.setToAccount(to);
         transaction.setAmount(amount);
-        transaction.setTimestamp(LocalDateTime.now());
         transaction.setType(TransactionType.TRANSFER);
+        transaction.setTimestamp(LocalDateTime.now());
 
-        // Hesaplardan bakiye düşme
+        // Hesaplardan bakiye düşme kontrolü
 
         if (from.getBalance().compareTo(amount) >= 0) {
             from.setBalance(from.getBalance().subtract(amount));
@@ -45,25 +49,23 @@ public class TransactionService {
             transaction.setStatus(TransactionStatus.FAILED);
         }
 
-        transactions.add(transaction);
+        transactionRepository.save(transaction);
         return transaction;
     }
 
-    // Tüm işlemleri getir
     public List<Transaction> getAllTransactions() {
-        return transactions;
+        return transactionRepository.findAll();
     }
 
-    // Belirli bir hesaba ait işlemleri getir
     public List<Transaction> getTransactionsForAccount(Account account) {
         if (account == null) {
             throw new IllegalArgumentException("Account cannot be null");
         }
 
         List<Transaction> result = new ArrayList<>();
-        for (Transaction tx : transactions) {
+        for (Transaction tx : transactionRepository.findAll()) { // Tüm işlemleri al
             if (tx.getFromAccount().equals(account) || tx.getToAccount().equals(account)) {
-                result.add(tx);
+                result.add(tx); // Hesaba ait işlemleri ekle
             }
         }
         return result;
