@@ -1,36 +1,37 @@
 package com.myapp.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.myapp.model.Account;
-import com.myapp.repository.AccountRepository;
 
 public class AccountService {
+    private final List<Account> accounts = new ArrayList<>();
+    private int nextAccountId = 1;
 
-    private final AccountRepository accountRepository;
-    private int accountIdCounter = 1;
-
-    public AccountService(AccountRepository accountRepository) {
-        this.accountRepository = accountRepository;
-    }
-
-    public Account createAccount(String ownerName, BigDecimal initialBalance) {
+    // Yeni hesap oluşturur
+    public Account createAccount(String owner, BigDecimal initialBalance) {
         Account account = new Account();
-        account.setId(accountIdCounter++);
-        account.setOwnerName(ownerName);
+        account.setId(nextAccountId++);
+        account.setOwnerName(owner);
         account.setBalance(initialBalance);
-        accountRepository.save(account);
+        accounts.add(account);
         return account;
     }
 
-    public Optional<Account> findById(long id) {
-        return accountRepository.findById((int) id);
+    // ID'ye göre hesap getirir
+    public Account getAccountById(long id) {
+        for (Account acc : accounts) {
+            if (acc.getId() == id) {
+                return acc;
+            }
+        }
+        return null;
     }
-    
 
+    // Tüm hesapları döner
     public List<Account> getAllAccounts() {
-        return accountRepository.findAll();
+        return accounts;
     }
 }
