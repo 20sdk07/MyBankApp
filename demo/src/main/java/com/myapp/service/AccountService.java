@@ -10,6 +10,17 @@ public class AccountService {
     private final List<Account> accounts = new ArrayList<>();
     private int nextAccountId = 1;
 
+    
+    //login 
+    public Account login(String username, String password) {
+        for (Account acc : accounts) {
+            if (acc.getUsername().equals(username) && acc.getPassword().equals(password)) {
+                return acc;
+            }
+        }
+        return null; // giriş başarısız
+    }
+
     // Yeni hesap oluşturur
     public Account createAccount(String owner, BigDecimal initialBalance) {
         Account account = new Account();
@@ -21,7 +32,7 @@ public class AccountService {
     }
 
     // ID'ye göre hesap getirir
-    public Account getAccountById(long id) {
+    public Account findById(long id) {
         for (Account acc : accounts) {
             if (acc.getId() == id) {
                 return acc;
