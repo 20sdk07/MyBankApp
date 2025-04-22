@@ -3,6 +3,8 @@ package com.myapp.controller;
 import com.myapp.model.Account;
 import com.myapp.service.AccountService;
 import com.myapp.service.TransactionService;
+import com.myapp.model.Transaction;
+import com.myapp.model.enums.TransactionStatus;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -55,6 +57,7 @@ public class AccountController {
     private void login() {
         System.out.print("Enter your account ID: ");
         long id = scanner.nextLong();
+        scanner.nextLine();
 
         Optional<Account> optionalAccount = accountService.findById(id);
         if (optionalAccount.isPresent()) {
@@ -62,7 +65,7 @@ public class AccountController {
             System.out.println("Login successful. Welcome, " + loggedInAccount.getOwnerName());
             showAccountMenu();
         } else {
-            System.out.println("Account not found.");
+            System.out.println("Account not found. Please check your ID and try again.");
         }
     }
 
@@ -95,19 +98,36 @@ public class AccountController {
     }
 
     private void transferMoney() {
+        if (loggedInAccount == null) {
+            System.out.println("You must be logged in to perform this action.");
+            return;
+        }
+
         System.out.print("Enter recipient account ID: ");
         long toId = scanner.nextLong();
+        scanner.nextLine();
 
         System.out.print("Enter amount to transfer: ");
         BigDecimal amount = scanner.nextBigDecimal();
+        scanner.nextLine();
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            System.out.println("Amount must be greater than zero.");
+            return;
+        }
 
         Optional<Account> toAccountOptional = accountService.findById(toId);
-        if (toAccountOptional.isPresent()) {
-            Account toAccount = toAccountOptional.get();
-            transactionService.transfer(loggedInAccount, toAccount, amount);
+        if (toAccountOptional.isEmpty()) {
+            System.out.println("Recipient account not found.");
+            return;
+        }
+
+        Account toAccount = toAccountOptional.get();
+        Transaction transaction = transactionService.transfer(loggedInAccount, toAccount, amount);
+        if (transaction.getStatus() == TransactionStatus.SUCCESS) {
             System.out.println("Transfer completed.");
         } else {
-            System.out.println("Recipient account not found.");
+            System.out.println("Transfer failed. Insufficient balance.");
         }
     }
 }
