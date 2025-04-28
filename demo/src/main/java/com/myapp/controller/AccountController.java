@@ -1,133 +1,51 @@
 package com.myapp.controller;
 
-import com.myapp.model.Account;
-import com.myapp.service.AccountService;
-import com.myapp.service.TransactionService;
-import com.myapp.model.Transaction;
-import com.myapp.model.enums.TransactionStatus;
-
 import java.math.BigDecimal;
 import java.util.Optional;
-import java.util.Scanner;
+
+import com.myapp.model.Account;
+import com.myapp.model.Transaction;
+import com.myapp.service.AccountService;
+import com.myapp.service.TransactionService;
 
 public class AccountController {
+
     private final AccountService accountService;
     private final TransactionService transactionService;
-    private Account loggedInAccount = null;
 
     public AccountController(AccountService accountService, TransactionService transactionService) {
         this.accountService = accountService;
         this.transactionService = transactionService;
     }
 
-    private final Scanner scanner = new Scanner(System.in);
-
-    public void start() {
-        while (true) {
-            System.out.println("\n--- Welcome to My Bank App ---");
-            System.out.println("1. Create Account");
-            System.out.println("2. Login");
-            System.out.println("3. Exit");
-            System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
-
-            switch (choice) {
-                case 1 -> createAccount();
-                case 2 -> login();
-                case 3 -> {
-                    System.out.println("Goodbye!");
-                    return;
-                }
-                default -> System.out.println("Invalid choice.");
-            }
+    public Account createAccount(String name, BigDecimal initialBalance) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty.");
         }
-    }
-
-    private void createAccount() {
-        System.out.print("Enter your name: ");
-        String name = scanner.next();
-
-        System.out.print("Enter initial balance: ");
-        BigDecimal balance = scanner.nextBigDecimal();
-
-        Account account = accountService.createAccount(name, balance);
-        System.out.println("Account created successfully. ID: " + account.getId());
-    }
-
-    private void login() {
-        System.out.print("Enter your account ID: ");
-        long id = scanner.nextLong();
-        scanner.nextLine();
-
-        Optional<Account> optionalAccount = accountService.findById(id);
-        if (optionalAccount.isPresent()) {
-            loggedInAccount = optionalAccount.get();
-            System.out.println("Login successful. Welcome, " + loggedInAccount.getOwnerName());
-            showAccountMenu();
-        } else {
-            System.out.println("Account not found. Please check your ID and try again.");
+        if (initialBalance == null || initialBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Initial balance cannot be negative.");
         }
+        return accountService.createAccount(name, initialBalance);
     }
 
-    private void showAccountMenu() {
-        while (true) {
-            System.out.println("\n--- Account Menu ---");
-            System.out.println("1. View Account Info");
-            System.out.println("2. Transfer Money");
-            System.out.println("3. Logout");
-            System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
+    public Optional<Account> login(long accountId) {
+        return accountService.findById(accountId);
+    }
 
-            switch (choice) {
-                case 1 -> viewAccountInfo();
-                case 2 -> transferMoney();
-                case 3 -> {
-                    System.out.println("Logged out.");
-                    loggedInAccount = null;
-                    return;
-                }
-                default -> System.out.println("Invalid choice.");
-            }
+    public Transaction transfer(Account from, long toId, BigDecimal amount) {
+        if (from == null) {
+            throw new IllegalStateException("Sender account cannot be null.");
         }
-    }
-
-    private void viewAccountInfo() {
-        System.out.println("Account ID: " + loggedInAccount.getId());
-        System.out.println("Owner: " + loggedInAccount.getOwnerName());
-        System.out.println("Balance: " + loggedInAccount.getBalance());
-    }
-
-    private void transferMoney() {
-        if (loggedInAccount == null) {
-            System.out.println("You must be logged in to perform this action.");
-            return;
-        }
-
-        System.out.print("Enter recipient account ID: ");
-        long toId = scanner.nextLong();
-        scanner.nextLine();
-
-        System.out.print("Enter amount to transfer: ");
-        BigDecimal amount = scanner.nextBigDecimal();
-        scanner.nextLine();
-
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            System.out.println("Amount must be greater than zero.");
-            return;
+            throw new IllegalArgumentException("Amount must be greater than zero.");
         }
+        Account toAccount = accountService.findById(toId)
+                                          .orElseThrow(() -> new IllegalArgumentException("Recipient account not found."));
+        return transactionService.transfer(from, toAccount, amount);
+    }
 
-        Optional<Account> toAccountOptional = accountService.findById(toId);
-        if (toAccountOptional.isEmpty()) {
-            System.out.println("Recipient account not found.");
-            return;
-        }
-
-        Account toAccount = toAccountOptional.get();
-        Transaction transaction = transactionService.transfer(loggedInAccount, toAccount, amount);
-        if (transaction.getStatus() == TransactionStatus.SUCCESS) {
-            System.out.println("Transfer completed.");
-        } else {
-            System.out.println("Transfer failed. Insufficient balance.");
-        }
+    public Account viewAccountInfo(long accountId) {
+        return accountService.findById(accountId)
+                              .orElseThrow(() -> new IllegalArgumentException("Account not found."));
     }
 }

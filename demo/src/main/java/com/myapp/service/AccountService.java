@@ -1,7 +1,6 @@
 package com.myapp.service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,8 +9,7 @@ import com.myapp.repository.AccountRepository;
 
 public class AccountService {
     private final AccountRepository accountRepository;
-    private final List<Account> accounts = new ArrayList<>();
-    private int nextAccountId = 1;
+    private int nextAccountId = 1; // ID sayacı
 
     public AccountService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
@@ -23,19 +21,18 @@ public class AccountService {
         account.setId(nextAccountId++);
         account.setOwnerName(owner);
         account.setBalance(initialBalance);
-        accounts.add(account);
+
+        accountRepository.save(account); // Kayıt işlemi sadece repository üzerinden
         return account;
     }
 
     // ID'ye göre hesap getirir
     public Optional<Account> findById(long id) {
-    return accounts.stream()
-                   .filter(account -> account.getId() == id)
-                   .findFirst();
-}
+        return accountRepository.findById((int) id); // Repository'de int ID kullanıyoruz
+    }
 
-    // Tüm hesapları döner
+    // Tüm hesapları getirir
     public List<Account> getAllAccounts() {
-        return accounts;
+        return accountRepository.findAll();
     }
 }
