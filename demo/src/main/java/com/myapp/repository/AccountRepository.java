@@ -14,7 +14,7 @@ public class AccountRepository {
         accounts.add(account);
     }
 
-    public Optional<Account> findById(int id) {
+    public Optional<Account> findById(long id) {
         return accounts.stream()
                        .filter(account -> account.getId() == id)
                        .findFirst();
