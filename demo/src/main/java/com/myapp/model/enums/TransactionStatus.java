@@ -1,3 +1,4 @@
+
 package com.myapp.model.enums;
 
 public enum TransactionStatus {
@@ -5,3 +6,4 @@ public enum TransactionStatus {
     SUCCESS,   // İşlem başarıyla gerçekleşti
     FAILED     // İşlem başarısız oldu
 }
+

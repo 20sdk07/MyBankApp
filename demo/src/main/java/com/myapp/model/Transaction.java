@@ -7,20 +7,33 @@ import com.myapp.model.enums.TransactionStatus;
 import com.myapp.model.enums.TransactionType;
 
 public class Transaction {
-    private int id;
+    private long id;
     private Account fromAccount;
     private Account toAccount;
     private BigDecimal amount;
-    private TransactionType type;
-    private TransactionStatus status;
     private LocalDateTime timestamp;
+    private TransactionStatus status;
+    private TransactionType type;
 
-    // Getters and Setters
-    public int getId() {
+    public Transaction(long id, Account fromAccount, Account toAccount, BigDecimal  amount,
+                       LocalDateTime timestamp, TransactionStatus status, TransactionType type) {
+        this.id = id;
+        this.fromAccount = fromAccount;
+        this.toAccount = toAccount;
+        this.amount = amount;
+        this.timestamp = timestamp;
+        this.status = status;
+        this.type = type;
+    }
+
+    public Transaction() {}
+
+    // Getters and setters
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -40,7 +53,7 @@ public class Transaction {
         this.toAccount = toAccount;
     }
 
-    public BigDecimal getAmount() {
+    public BigDecimal  getAmount() {
         return amount;
     }
 
@@ -48,12 +61,12 @@ public class Transaction {
         this.amount = amount;
     }
 
-    public TransactionType getType() {
-        return type;
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 
-    public void setType(TransactionType type) {
-        this.type = type;
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 
     public TransactionStatus getStatus() {
@@ -64,11 +77,12 @@ public class Transaction {
         this.status = status;
     }
 
-    public LocalDateTime getTimestamp() {
-        return timestamp;
+    public TransactionType getType() {
+        return type;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
+    public void setType(TransactionType type) {
+        this.type = type;
     }
 }
+
