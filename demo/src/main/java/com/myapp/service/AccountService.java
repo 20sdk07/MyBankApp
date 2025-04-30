@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.myapp.model.Account;
+import com.myapp.model.enums.FreezeStatus;
 import com.myapp.repository.AccountRepository;
 
 public class AccountService {
@@ -35,4 +36,30 @@ public class AccountService {
     public List<Account> getAllAccounts() {
         return accountRepository.findAll();
     }
+
+    // Hesap dondurma işlemi
+    public void freezeAccount(long accountId) {
+    Account account = accountRepository.findById(accountId)
+            .orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + accountId));
+    account.setFreezeStatus(FreezeStatus.FROZEN);
+    accountRepository.save(account);
+    }
+
+    // Hesap dondurmayı kaldırma işlemi
+    public void unfreezeAccount(long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + accountId));
+        account.setFreezeStatus(FreezeStatus.ACTIVE);
+        accountRepository.save(account);
+    }
+    
+    // Hesap silme işlemi
+    public void deleteAccount(long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + accountId));
+        account.setDeleted(true);
+        accountRepository.save(account);
+    }
+    
+
 }

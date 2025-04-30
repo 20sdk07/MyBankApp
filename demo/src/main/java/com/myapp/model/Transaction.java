@@ -14,6 +14,7 @@ public class Transaction {
     private TransactionType type;
     private TransactionStatus status;
     private LocalDateTime timestamp;
+    
 
     // Getters and Setters
     public int getId() {

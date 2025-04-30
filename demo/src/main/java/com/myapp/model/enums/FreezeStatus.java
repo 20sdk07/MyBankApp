@@ -1,6 +1,6 @@
-
 package com.myapp.model.enums;
 
-public class FreezeStatus {
-    
+public enum FreezeStatus {
+    ACTIVE,
+    FROZEN
 }
