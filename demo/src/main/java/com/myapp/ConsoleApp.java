@@ -1,3 +1,4 @@
+/*
 package com.myapp;
 
 import java.math.BigDecimal;
@@ -147,3 +148,4 @@ public class ConsoleApp {
         }
     }
 }
+ */

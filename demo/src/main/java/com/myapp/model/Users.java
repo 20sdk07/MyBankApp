@@ -12,7 +12,6 @@ public class Users {
     
     @Id
     private UUID id;
-
     private String name;
     private String username;
     private String password;
@@ -22,8 +21,9 @@ public class Users {
         this.id = UUID.randomUUID();
     }
 
-    public Users(String username, String password, Role role) {
+    public Users(String name, String username, String password, Role role ) {
         this.id = UUID.randomUUID();
+        this.name = name;
         this.username = username;
         this.password = password;
         this.role = role;
@@ -34,6 +34,20 @@ public class Users {
     public UUID getId() {
         return id;
     }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
 
     public String getUsername() {
         return username;
@@ -58,4 +72,6 @@ public class Users {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    
 }

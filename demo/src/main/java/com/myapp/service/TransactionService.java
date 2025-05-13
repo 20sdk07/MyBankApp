@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.myapp.model.Account;
 import com.myapp.model.Transaction;
 import com.myapp.model.enums.TransactionStatus;
 import com.myapp.model.enums.TransactionType;
 import com.myapp.repository.TransactionRepository;
 
+@Service
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;

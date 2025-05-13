@@ -4,10 +4,13 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.stereotype.Service;
+
 import com.myapp.model.Account;
 import com.myapp.model.enums.FreezeStatus;
 import com.myapp.repository.AccountRepository;
 
+@Service
 public class AccountService {
     private final AccountRepository accountRepository;
     private int nextAccountId = 1; // ID sayacı

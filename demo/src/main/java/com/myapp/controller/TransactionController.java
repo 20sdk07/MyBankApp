@@ -1,62 +1,52 @@
 package com.myapp.controller;
 
 import java.util.List;
-import java.util.Scanner;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.myapp.model.Account;
 import com.myapp.model.Transaction;
 import com.myapp.service.AccountService;
 import com.myapp.service.TransactionService;
 
+@RestController
+@RequestMapping("/transactions") // Bu base path tüm transaction endpointleri için
 public class TransactionController {
 
     private final TransactionService transactionService;
     private final AccountService accountService;
-    private final Scanner scanner;
 
+    @Autowired
     public TransactionController(TransactionService transactionService, AccountService accountService) {
         this.transactionService = transactionService;
         this.accountService = accountService;
-        this.scanner = new Scanner(System.in);
     }
 
-    // Tüm işlemleri listele
-    public void showAllTransactions() {
+    @GetMapping // GET /transactions
+    public ResponseEntity<List<Transaction>> getAllTransactions() {
         List<Transaction> transactions = transactionService.getAllTransactions();
-        if (transactions == null || transactions.isEmpty()) { // Null kontrolü eklendi
-            System.out.println("Henüz hiç işlem yapılmamış.");
-        } else {
-            for (Transaction tx : transactions) {
-                System.out.println(tx);
-            }
+        if (transactions.isEmpty()) {
+            return ResponseEntity.noContent().build();
         }
+        return ResponseEntity.ok(transactions);
     }
 
-    // Belirli bir hesabın işlemlerini göster
-    public void showTransactionsForAccount() {
-        System.out.print("İşlemlerini görmek istediğiniz hesap ID'sini girin: ");
-        if (!scanner.hasNextLong()) { // Kullanıcı girişinin geçerli bir sayı olup olmadığını kontrol et
-            System.out.println("Geçersiz hesap ID'si girdiniz!");
-            scanner.next(); // Hatalı girdiyi temizle
-            return;
+    @GetMapping("/account/{accountId}") // GET /transactions/account/{accountId}
+    public ResponseEntity<List<Transaction>> getTransactionsForAccount(@PathVariable long accountId) {
+        Optional<Account> accountOptional = accountService.findById(accountId);
+        if (!accountOptional.isPresent()) {
+            return ResponseEntity.notFound().build();
         }
-
-        long accountId = scanner.nextLong();
-        scanner.nextLine(); // Giriş tamponunu temizle
-
-        Account account = accountService.findById(accountId).orElse(null);
-        if (account == null) {
-            System.out.println("Hesap bulunamadı!");
-            return;
+        List<Transaction> transactions = transactionService.getTransactionsForAccount(accountOptional.get());
+        if (transactions.isEmpty()) {
+            return ResponseEntity.noContent().build();
         }
-
-        List<Transaction> txList = transactionService.getTransactionsForAccount(account);
-        if (txList == null || txList.isEmpty()) { // Null kontrolü eklendi
-            System.out.println("Bu hesaba ait işlem bulunamadı.");
-        } else {
-            for (Transaction tx : txList) {
-                System.out.println(tx);
-            }
-        }
+        return ResponseEntity.ok(transactions);
     }
 }

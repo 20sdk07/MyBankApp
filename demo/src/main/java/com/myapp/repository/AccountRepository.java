@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.stereotype.Repository;
+
 import com.myapp.model.Account;
 
+@Repository
 public class AccountRepository {
 
     private final List<Account> accounts = new ArrayList<>();
