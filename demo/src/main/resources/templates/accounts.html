@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Hesap Listesi</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+    <h1>Hesaplar</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Sahibi</th>
+                <th>Bakiye</th>
+                <th>Durum</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="account : ${accounts}">
+                <td th:text="${account.id}"></td>
+                <td th:text="${account.ownerName}"></td>
+                <td th:text="${account.balance}"></td>
+                <td th:text="${account.freezeStatus}"></td>
+                <td>
+                    <form th:action="@{/accounts/{id}/freeze-request(id=${account.id})}" method="post">
+                        <button type="submit">Dondurma İsteği Gönder</button>
+                    </form>
+                    <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" th:href="@{/admin/freeze-requests}">Bekleyen İstekler</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <a href="/accounts/create-account">Yeni Hesap Oluştur</a>
+</body>
+</html>

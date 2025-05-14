@@ -1,3 +1,4 @@
+C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\repository\FreezeRequestRepository.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\enums\FreezeStatus.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\Transaction.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\service\TransactionService.java
@@ -6,15 +7,18 @@ C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\repository\UserR
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\repository\TransactionRepository.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\controller\CreateAccountRequest.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\enums\AccountStatus.java
+C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\enums\FreezeRequestStatus.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\enums\TransactionType.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\Account.java
-C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\ConsoleApp.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\controller\TransactionController.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\controller\TransferRequest.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\controller\AccountController.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\enums\LoanStatus.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\enums\TransactionStatus.java
+C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\FreezeRequest.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\Users.java
+C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\service\FreezeRequestService.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\repository\AccountRepository.java
+C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\config\WebSecurityConfig.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\Main.java
 C:\Users\Sadik\Desktop\My Bank App\demo\src\main\java\com\myapp\model\enums\Role.java

@@ -1,16 +1,26 @@
 package com.myapp.controller;
 
-import com.myapp.model.Account;
-import com.myapp.model.Transaction;
-import com.myapp.service.AccountService;
-import com.myapp.service.TransactionService;
+import java.math.BigDecimal;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-import java.util.Optional;
+import com.myapp.model.Account;
+import com.myapp.model.FreezeRequest;
+import com.myapp.model.Transaction;
+import com.myapp.service.AccountService;
+import com.myapp.service.FreezeRequestService;
+import com.myapp.service.TransactionService;
 
 @RestController
 @RequestMapping("/accounts") // Bu base path tüm account endpointleri için
@@ -18,18 +28,21 @@ public class AccountController {
 
     private final AccountService accountService;
     private final TransactionService transactionService;
+    private final FreezeRequestService freezeRequestService;
 
     @Autowired
-    public AccountController(AccountService accountService, TransactionService transactionService) {
+    public AccountController(AccountService accountService, TransactionService transactionService, FreezeRequestService freezeRequestService) {
         this.accountService = accountService;
         this.transactionService = transactionService;
+        this.freezeRequestService = freezeRequestService;
     }
 
+
     @PostMapping // POST /accounts
-public ResponseEntity<Account> createAccount(@RequestBody CreateAccountRequest request) {
+    public ResponseEntity<Account> createAccount(@RequestBody CreateAccountRequest request) {
     Account account = accountService.createAccount(request.getOwnerName(), request.getInitialBalance());
     return new ResponseEntity<>(account, HttpStatus.CREATED);
-}
+    }
 
     @GetMapping("/{accountId}") // GET /accounts/{accountId}
     public ResponseEntity<Account> getAccount(@PathVariable long accountId) {
@@ -62,7 +75,7 @@ public ResponseEntity<Account> createAccount(@RequestBody CreateAccountRequest r
     } catch (IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
-}
+    }
 
     
 
@@ -105,58 +118,14 @@ public ResponseEntity<Account> createAccount(@RequestBody CreateAccountRequest r
             return ResponseEntity.notFound().build();
         }
     }
-}
 
-// İstek gövdelerini (Request Body) karşılamak için basit POJO'lar (Plain Old Java Object) oluşturalım
-class CreateAccountRequest {
-    private String ownerName;
-    private BigDecimal initialBalance;
-
-    // Getter ve Setter'lar
-    public String getOwnerName() {
-        return ownerName;
-    }
-
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
-    }
-
-    public BigDecimal getInitialBalance() {
-        return initialBalance;
-    }
-
-    public void setInitialBalance(BigDecimal initialBalance) {
-        this.initialBalance = initialBalance;
-    }
-}
-
-class TransferRequest {
-    private long fromAccountId;
-    private long toAccountId;
-    private BigDecimal amount;
-
-    // Getter ve Setter'lar
-    public long getFromAccountId() {
-        return fromAccountId;
-    }
-
-    public void setFromAccountId(long fromAccountId) {
-        this.fromAccountId = fromAccountId;
-    }
-
-    public long getToAccountId() {
-        return toAccountId;
-    }
-
-    public void setToAccountId(long toAccountId) {
-        this.toAccountId = toAccountId;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
+     @PostMapping("/{accountId}/freeze-request")
+    public ResponseEntity<?> requestFreezeAccount(@PathVariable Long accountId) {
+        try {
+            FreezeRequest freezeRequest = freezeRequestService.createFreezeRequest(accountId);
+            return new ResponseEntity<>("Hesap dondurma isteğiniz alınmıştır. Yönetici onayını beklemektedir.", HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
