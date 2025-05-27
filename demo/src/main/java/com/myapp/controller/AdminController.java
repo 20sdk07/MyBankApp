@@ -1,20 +1,16 @@
 package com.myapp.controller;
 
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.myapp.model.FreezeRequest;
 import com.myapp.service.FreezeRequestService;
 
-@RestController
+@Controller
 @RequestMapping("/admin/freeze-requests")
 @PreAuthorize("hasRole('ADMIN')") // Sadece ADMIN rolüne sahip kullanıcılar erişebilir
 public class AdminController {
@@ -26,28 +22,30 @@ public class AdminController {
     }
 
     @GetMapping
-    public ResponseEntity<List<FreezeRequest>> getPendingFreezeRequests() {
-        List<FreezeRequest> pendingRequests = freezeRequestService.getAllPendingFreezeRequests();
-        return new ResponseEntity<>(pendingRequests, HttpStatus.OK);
+    public String getPendingFreezeRequests(Model model) {
+        model.addAttribute("requests", freezeRequestService.getAllPendingFreezeRequests());
+        return "admin/freeze-requests"; // admin/freeze-requests.html'i göster
     }
 
     @PostMapping("/{requestId}/approve")
-    public ResponseEntity<Void> approveFreezeRequest(@PathVariable Long requestId) {
+    public String approveFreezeRequest(@PathVariable Long requestId, Model model) {
         try {
             freezeRequestService.approveFreezeRequest(requestId);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return "redirect:/admin/freeze-requests"; // İstek listesine geri yönlendir
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            model.addAttribute("error", e.getMessage());
+            return "admin/freeze-requests"; // Hata varsa aynı sayfada göster
         }
     }
 
     @PostMapping("/{requestId}/reject")
-    public ResponseEntity<Void> rejectFreezeRequest(@PathVariable Long requestId) {
+    public String rejectFreezeRequest(@PathVariable Long requestId, Model model) {
         try {
             freezeRequestService.rejectFreezeRequest(requestId);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return "redirect:/admin/freeze-requests"; // İstek listesine geri yönlendir
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            model.addAttribute("error", e.getMessage());
+            return "admin/freeze-requests"; // Hata varsa aynı sayfada göster
         }
     }
 }

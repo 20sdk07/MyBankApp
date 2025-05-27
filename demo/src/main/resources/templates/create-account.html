@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Yeni Hesap Oluştur</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="fragments/navbar :: navbar"></div>
+    <h1>Yeni Hesap Oluştur</h1>
+    <form action="/accounts" method="post">
+        <div>
+            <label for="ownerName">Hesap Sahibi:</label>
+            <input type="text" id="ownerName" name="ownerName" required="required" />
+        </div>
+        <div>
+            <label for="initialBalance">Başlangıç Bakiyesi:</label>
+            <input type="number" id="initialBalance" name="initialBalance" step="0.01" required="required" />
+        </div>
+        <button type="submit">Oluştur</button>
+    </form>
+    <br/>
+    <a href="/accounts">Hesap Listesine Geri Dön</a>
+</body>
+</html>

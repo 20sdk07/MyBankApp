@@ -16,31 +16,35 @@ import com.myapp.repository.TransactionRepository;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final AccountService accountService;
     private int nextTransactionId = 1; // Transaction ID sayacı
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(TransactionRepository transactionRepository, AccountService accountService) {
         this.transactionRepository = transactionRepository;
+        this.accountService = accountService;
     }
 
-    public Transaction transfer(Account from, Account to, BigDecimal amount) {
-        if (from == null || to == null) {
-            throw new IllegalArgumentException("Accounts cannot be null.");
-        }
+    public Transaction transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
+        Account fromAccount = accountService.findById(fromAccountId)
+            .orElseThrow(() -> new IllegalArgumentException("From account not found"));
+        Account toAccount = accountService.findById(toAccountId)
+            .orElseThrow(() -> new IllegalArgumentException("To account not found"));
+
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero.");
         }
 
         Transaction transaction = new Transaction();
         transaction.setId(nextTransactionId++);
-        transaction.setFromAccount(from);
-        transaction.setToAccount(to);
+        transaction.setFromAccount(fromAccount);
+        transaction.setToAccount(toAccount);
         transaction.setAmount(amount);
         transaction.setType(TransactionType.TRANSFER);
         transaction.setTimestamp(LocalDateTime.now());
 
-        if (from.getBalance().compareTo(amount) >= 0) {
-            from.setBalance(from.getBalance().subtract(amount));
-            to.setBalance(to.getBalance().add(amount));
+        if (fromAccount.getBalance().compareTo(amount) >= 0) {
+            fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
+            toAccount.setBalance(toAccount.getBalance().add(amount));
             transaction.setStatus(TransactionStatus.SUCCESS);
         } else {
             transaction.setStatus(TransactionStatus.FAILED);

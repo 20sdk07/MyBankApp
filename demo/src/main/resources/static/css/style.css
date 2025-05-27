@@ -1,0 +1,30 @@
+body {
+    background: #f8f9fa;
+}
+.navbar-brand {
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+.card {
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.login-container, .register-container {
+    margin-top: 80px;
+    max-width: 400px;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem #0d6efd33;
+}
+.table thead {
+    background: #0d6efd;
+    color: #fff;
+}
+.btn-primary, .btn-outline-primary {
+    border-radius: 8px;
+}
+/* Diğer ortak veya özel stiller buraya eklenebilir */
