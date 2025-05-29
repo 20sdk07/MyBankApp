@@ -1,131 +1,179 @@
 package com.myapp.controller;
 
 import java.math.BigDecimal;
-import java.util.Optional;
-
+import java.security.Principal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.myapp.model.Account;
-import com.myapp.service.AccountService;
-import com.myapp.service.FreezeRequestService;
+import com.myapp.exception.AccountFrozenException;
+import com.myapp.exception.InsufficientBalanceException;
+import com.myapp.model.enums.FreezeStatus;
+import com.myapp.service.IAccountManagementService;
+import com.myapp.service.IAccountQueryService;
 import com.myapp.service.TransactionService;
+import com.myapp.service.FreezeRequestService;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/accounts")
 public class AccountController {
-
-    private final AccountService accountService;
+    private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
+    private final IAccountManagementService accountManagementService;
+    private final IAccountQueryService accountQueryService;
     private final TransactionService transactionService;
     private final FreezeRequestService freezeRequestService;
 
-    public AccountController(AccountService accountService, TransactionService transactionService, FreezeRequestService freezeRequestService) {
-        this.accountService = accountService;
+    public AccountController(IAccountManagementService accountManagementService,
+                           IAccountQueryService accountQueryService,
+                           TransactionService transactionService,
+                           FreezeRequestService freezeRequestService) {
+        this.accountManagementService = accountManagementService;
+        this.accountQueryService = accountQueryService;
         this.transactionService = transactionService;
         this.freezeRequestService = freezeRequestService;
     }
 
     @GetMapping
-    public String listAccounts(Model model) {
-        model.addAttribute("accounts", accountService.getAllAccounts());
+    public String listAccounts(Model model, Principal principal) {
+        String username = principal.getName();
+        model.addAttribute("accounts", accountQueryService.getAccountsByOwnerName(username));
         return "accounts";
     }
 
-    @GetMapping("/create-account")
-    public String showCreateAccountForm() {
+    @GetMapping("/new")
+    public String showCreateAccountForm(Model model, Principal principal) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("username", principal.getName());
         return "create-account";
     }
 
     @PostMapping
-    public String createAccount(@RequestParam String ownerName, @RequestParam BigDecimal initialBalance) {
-        accountService.createAccount(ownerName, initialBalance);
+    public String createAccount(@RequestParam String ownerName,
+                              RedirectAttributes redirectAttributes,
+                              Principal principal) {
+        if (principal == null || !principal.getName().equals(ownerName)) {
+            logger.warn("Authorization error: Principal name does not match owner name. Principal: {}, Owner: {}", 
+                       principal != null ? principal.getName() : "null", ownerName);
+            redirectAttributes.addFlashAttribute("error", "Yetkilendirme hatası: Geçersiz hesap sahibi");
+            return "redirect:/accounts";
+        }
+
+        try {
+            logger.info("Attempting to create account for user: {}", ownerName);
+            Account account = accountManagementService.createAccount(ownerName, new BigDecimal("1000.00"));
+            logger.info("Successfully created account ID: {} for user: {}", account.getId(), ownerName);
+            
+            redirectAttributes.addFlashAttribute("success", 
+                String.format("Hesap başarıyla oluşturuldu. Hesap No: %d. Başlangıç bakiyesi: 1.000,00 ₺", account.getId()));
+            return "redirect:/accounts";
+        } catch (Exception e) {
+            logger.error("Failed to create account for user: {}", ownerName, e);
+            redirectAttributes.addFlashAttribute("error", "Hesap oluşturulamadı: " + e.getMessage());
+            return "redirect:/accounts/new";
+        }
+    }
+
+    @GetMapping("/{id}")
+    public String getAccount(@PathVariable long id, Model model, Principal principal) {
+        Optional<Account> account = accountQueryService.findById(id);
+        if (account.isPresent() && account.get().getOwnerName().equals(principal.getName())) {
+            Account acc = account.get();
+            model.addAttribute("account", acc);
+            model.addAttribute("transactions", transactionService.getTransactionsForAccount(acc));
+            model.addAttribute("freezeRequestExists", freezeRequestService.existsPendingRequestForAccount(id));
+            return "account-detail";
+        }
+        return "redirect:/accounts?error=Hesap bulunamadı veya yetkisiz erişim";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteAccount(@PathVariable long id, RedirectAttributes redirectAttributes) {
+        try {
+            accountManagementService.deleteAccount(id);
+            redirectAttributes.addFlashAttribute("success", "Hesap silindi.");
+            return "redirect:/accounts";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/accounts";
+        }
+    }
+
+    @PostMapping("/{id}/freeze-request")
+    public String createFreezeRequest(@PathVariable long id, RedirectAttributes redirectAttributes) {
+        try {
+            if (freezeRequestService.createFreezeRequest(id)) {
+                redirectAttributes.addFlashAttribute("success", "Dondurma isteği başarıyla oluşturuldu.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Bu hesap için zaten bekleyen bir dondurma isteği bulunmaktadır.");
+            }
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Beklenmeyen bir hata oluştu: " + e.getMessage());
+        }
+        return "redirect:/accounts/" + id;
+    }
+
+    @GetMapping("/{id}/transfer")
+    public String showTransferForm(@PathVariable long id, Model model, Principal principal) {
+        Optional<Account> account = accountQueryService.findById(id);
+        if (account.isPresent() && account.get().getOwnerName().equals(principal.getName())) {            Account acc = account.get();
+            // Dondurulmuş hesap kontrolü
+            if (acc.getFreezeStatus() == FreezeStatus.FROZEN) {
+                model.addAttribute("account", acc);
+                model.addAttribute("error", "Bu hesap dondurulmuş durumda olduğu için transfer işlemi yapamazsınız.");
+                return "transfer";
+            }
+            model.addAttribute("account", acc);
+            return "transfer";
+        }
+        return "redirect:/accounts?error=Hesap bulunamadı veya yetkisiz erişim";
+    }    @PostMapping("/{id}/transfer")
+    public String processTransfer(@PathVariable long id,
+                                @RequestParam Long targetAccountId,
+                                @RequestParam BigDecimal amount,
+                                RedirectAttributes redirectAttributes,
+                                Principal principal) {
+        Optional<Account> account = accountQueryService.findById(id);
+        if (account.isPresent() && account.get().getOwnerName().equals(principal.getName())) {
+            Account sourceAccount = account.get();
+            
+            // Kaynak hesap dondurulmuş mu kontrol et
+            if (sourceAccount.getFreezeStatus() == FreezeStatus.FROZEN) {
+                redirectAttributes.addFlashAttribute("error", 
+                    "Bu hesap dondurulmuş durumda olduğu için transfer yapılamaz.");
+                return "redirect:/accounts/" + id;
+            }
+            
+            // Hedef hesap dondurulmuş mu kontrol et
+            Optional<Account> targetAccount = accountQueryService.findById(targetAccountId);
+            if (targetAccount.isPresent() && targetAccount.get().getFreezeStatus() == FreezeStatus.FROZEN) {
+                redirectAttributes.addFlashAttribute("error", 
+                    "Hedef hesap dondurulmuş durumda olduğu için transfer yapılamaz.");
+                return "redirect:/accounts/" + id + "/transfer";
+            }            try {
+                transactionService.transfer(id, targetAccountId, amount);
+                redirectAttributes.addFlashAttribute("success", "Transfer başarıyla gerçekleştirildi.");
+                return "redirect:/accounts/" + id;
+            } catch (AccountFrozenException e) {
+                redirectAttributes.addFlashAttribute("error", e.getMessage());
+                return "redirect:/accounts/" + id;
+            } catch (InsufficientBalanceException e) {
+                redirectAttributes.addFlashAttribute("error", e.getMessage());
+                return "redirect:/accounts/" + id + "/transfer";
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Transfer başarısız: " + e.getMessage());
+                return "redirect:/accounts/" + id + "/transfer";
+            }
+        }
+        redirectAttributes.addFlashAttribute("error", "Hesap bulunamadı veya yetkisiz erişim");
         return "redirect:/accounts";
-    }
-
-    @GetMapping("/{accountId}")
-    public String getAccount(@PathVariable long accountId, Model model) {
-        Optional<Account> account = accountService.findById(accountId);
-        if (account.isPresent()) {
-            model.addAttribute("account", account.get());
-            return "account-info";
-        } else {
-            return "redirect:/accounts?error=Hesap Bulunamadı"; // Redirect ile hata mesajı
-        }
-    }
-
-
-
-    @PostMapping("/transfer")
-    public String transfer(@RequestParam Long fromAccountId, @RequestParam Long toAccountId, @RequestParam BigDecimal amount, Model model) {
-        try {
-            transactionService.transfer(fromAccountId, toAccountId, amount); // Doğrudan servis katmanını çağırıyoruz.
-            return "redirect:/accounts"; // Başarılıysa hesap listesine dön
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "transfer-form"; // Hata durumunda transfer formuna geri dön ve hatayı göster
-        }
-    }
-
-    @GetMapping("/transfer")
-    public String showTransferForm(Model model){
-        model.addAttribute("accounts", accountService.getAllAccounts());
-        return "transfer-form";
-    }
-
-
-    @GetMapping("/{accountId}/info")
-    public String viewAccountInfo(@PathVariable long accountId, Model model) {
-        Optional<Account> account = accountService.findById(accountId);
-        if (account.isPresent()) {
-            model.addAttribute("account", account.get());
-            return "account-info";
-        } else {
-            return "redirect:/accounts?error=Hesap Bulunamadı";
-        }
-    }
-
-    @PostMapping("/{accountId}/freeze-request")
-    public String requestFreezeAccount(@PathVariable Long accountId) {
-        try {
-            freezeRequestService.createFreezeRequest(accountId);
-            return "redirect:/accounts";
-        } catch (IllegalArgumentException e) {
-            return "redirect:/accounts?error=" + e.getMessage();
-        }
-    }
-
-    @PostMapping("/{accountId}/freeze")
-    public String freezeAccount(@PathVariable long accountId) {
-        try {
-            accountService.freezeAccount(accountId);
-            return "redirect:/accounts";
-        } catch (IllegalArgumentException e) {
-            return "redirect:/accounts?error=" + e.getMessage();
-        }
-    }
-
-    @PostMapping("/{accountId}/unfreeze")
-    public String unfreezeAccount(@PathVariable long accountId) {
-        try {
-            accountService.unfreezeAccount(accountId);
-            return "redirect:/accounts";
-        } catch (IllegalArgumentException e) {
-           return "redirect:/accounts?error=" + e.getMessage();
-        }
-    }
-
-    @PostMapping("/{accountId}/delete")
-    public String deleteAccount(@PathVariable long accountId) {
-        try {
-            accountService.deleteAccount(accountId);
-            return "redirect:/accounts";
-        } catch (IllegalArgumentException e) {
-            return "redirect:/accounts?error=" + e.getMessage();
-        }
     }
 }

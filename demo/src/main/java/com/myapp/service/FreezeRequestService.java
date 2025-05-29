@@ -23,19 +23,28 @@ public class FreezeRequestService {
         this.accountService = accountService;
     }
 
-    public FreezeRequest createFreezeRequest(Long accountId) {
+    public boolean createFreezeRequest(Long accountId) {
+        if (existsPendingRequestForAccount(accountId)) {
+            return false; // Zaten bekleyen istek var
+        }
         Optional<Account> accountOptional = accountService.findById(accountId);
         if (!accountOptional.isPresent()) {
             throw new IllegalArgumentException("Belirtilen hesap bulunamadı: " + accountId);
         }
         Account account = accountOptional.get();
 
+        // Admin hesabı kontrolü
+        if (account.getOwnerName().equalsIgnoreCase("admin")) {
+            throw new IllegalArgumentException("Admin hesabı için dondurma isteği oluşturulamaz!");
+        }
+
         FreezeRequest freezeRequest = new FreezeRequest();
         freezeRequest.setAccountId(accountId);
         freezeRequest.setRequestDate(LocalDateTime.now());
         freezeRequest.setStatus(FreezeRequestStatus.PENDING);
 
-        return freezeRequestRepository.save(freezeRequest);
+        freezeRequestRepository.save(freezeRequest);
+        return true;
     }
 
     public List<FreezeRequest> getAllPendingFreezeRequests() {
@@ -59,7 +68,7 @@ public class FreezeRequestService {
         }
         Account account = accountOptional.get();
 
-        accountService.freezeAccount(account.getId()); // AccountService'teki metodu kullanıyoruz
+        accountService.freezeAccount(account.getId());
         freezeRequest.setStatus(FreezeRequestStatus.APPROVED);
         freezeRequestRepository.save(freezeRequest);
     }
@@ -75,5 +84,11 @@ public class FreezeRequestService {
         }
         freezeRequest.setStatus(FreezeRequestStatus.REJECTED);
         freezeRequestRepository.save(freezeRequest);
+    }
+
+    public boolean existsPendingRequestForAccount(Long accountId) {
+        return freezeRequestRepository.findByStatus(FreezeRequestStatus.PENDING)
+            .stream()
+            .anyMatch(req -> req.getAccountId().equals(accountId));
     }
 }

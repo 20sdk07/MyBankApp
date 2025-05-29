@@ -6,20 +6,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.myapp.model.Users;
 import com.myapp.model.enums.Role;
 import com.myapp.repository.UserRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.myapp.service.UserService;
 
 @Controller
 public class RegisterController {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
 
-    public RegisterController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public RegisterController(UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
     }
 
     @GetMapping("/register")
@@ -36,9 +35,7 @@ public class RegisterController {
             model.addAttribute("error", "Bu kullanıcı adı zaten alınmış.");
             return "register";
         }
-        Users user = new Users(name, username, passwordEncoder.encode(password), Role.USER);
-        userRepository.save(user);
-        // Kayıt başarılıysa login sayfasına yönlendir
+        userService.createUser(username, name, password, Role.USER);
         return "redirect:/login?success";
     }
 }

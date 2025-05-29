@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Kullanıcı Hesapları (Admin)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container mt-5">
+    <h2>Kullanıcıya Ait Hesaplar</h2>
+    <p class="text-muted">Bu sayfada seçili kullanıcının tüm hesaplarını ve durumlarını görebilir, yönetebilirsiniz.</p>
+    <!-- userId her zaman gelsin, hata olmasın -->
+    <input type="hidden" name="userId" th:value="${userId}" />
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      <div th:if="${success}" class="toast align-items-center text-bg-success border-0 show" role="alert">
+        <div class="d-flex">
+          <div class="toast-body" th:text="${success}"></div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+      <div th:if="${error}" class="toast align-items-center text-bg-danger border-0 show" role="alert">
+        <div class="d-flex">
+          <div class="toast-body" th:text="${error}"></div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    </div>
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th>Hesap ID</th>
+                <th>Bakiye</th>
+                <th>Durum</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+          <tr th:if="${#lists.isEmpty(accounts)}">
+            <td colspan="4" class="text-center text-muted">Hiç hesap bulunamadı.</td>
+          </tr>          <tr th:each="acc : ${accounts}">
+                <td th:text="${acc.id}"></td>
+                <td th:text="${#numbers.formatDecimal(acc.balance, 2, 'COMMA', 2, 'POINT')} + ' ₺'"></td>
+                <td>
+                    <span th:if="${acc.isDeleted()}" class="badge bg-secondary">Silindi</span>
+                    <span th:if="${!acc.isDeleted()}" th:switch="${acc.freezeStatus}">
+                        <span th:case="'FROZEN'" class="badge bg-danger">Dondurulmuş</span>
+                        <span th:case="'ACTIVE'" class="badge bg-success">Aktif</span>
+                    </span>
+                </td>
+                <td class="text-end">
+                    <div class="btn-group" th:if="${!acc.isDeleted()}">
+                        <!-- Detay Butonu -->
+                        <a th:href="@{'/admin/accounts/' + ${acc.id} + '/details'}" 
+                           class="btn btn-primary btn-sm me-2">
+                            <i class="bi bi-info-circle"></i> Detay
+                        </a>
+                        
+                        <!-- Dondurma/Çözme Butonları -->
+                        <form th:if="${acc.freezeStatus.name() == 'ACTIVE'}" 
+                              th:action="@{/admin/accounts/{id}/freeze-by-admin(id=${acc.id})}" 
+                              method="post" class="d-inline me-2">
+                            <input type="hidden" name="userId" th:value="${userId}" />
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                <i class="bi bi-lock"></i> Dondur
+                            </button>
+                        </form>
+                        
+                        <form th:if="${acc.freezeStatus.name() == 'FROZEN'}" 
+                              th:action="@{/admin/accounts/{id}/unfreeze(id=${acc.id})}" 
+                              method="post" class="d-inline me-2">
+                            <input type="hidden" name="userId" th:value="${userId}" />
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i class="bi bi-unlock"></i> Çöz
+                            </button>
+                        </form>
+                        
+                        <!-- Silme Butonu -->
+                        <form th:action="@{/admin/accounts/{id}/delete(id=${acc.id})}" 
+                              method="post" class="d-inline">
+                            <input type="hidden" name="userId" th:value="${userId}" />
+                            <button type="submit" class="btn btn-danger btn-sm" 
+                                    onclick="return confirm('Bu hesabı silmek istediğinizden emin misiniz?')">
+                                <i class="bi bi-trash"></i> Sil
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <a th:href="@{/admin/users}" class="btn btn-secondary">Kullanıcı Listesine Geri Dön</a>
+</div>
+
+<!-- Freeze Modal -->
+<div th:each="acc : ${accounts}" th:if="${!acc.isDeleted() && acc.freezeStatus == 'ACTIVE'}">
+  <div class="modal fade" th:id="${'freezeModal-' + acc.id}" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="freezeModalLabel"><i class="bi bi-lock"></i> Hesabı Dondur</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong th:text="${acc.id}"></strong> numaralı hesabı dondurmak istediğinize emin misiniz?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+          <form th:action="@{'/admin/accounts/' + ${acc.id} + '/freeze'}" method="post" style="display:inline;">
+            <input type="hidden" name="userId" th:value="${userId}" />
+            <button type="submit" class="btn btn-warning"><i class="bi bi-lock"></i> Dondur</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div th:each="acc : ${accounts}" th:if="${!acc.isDeleted()}">
+  <div class="modal fade" th:id="${'deleteModal-' + acc.id}" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-trash"></i> Hesabı Sil</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong th:text="${acc.id}"></strong> numaralı hesabı silmek istediğinize emin misiniz?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+          <form th:action="@{'/admin/accounts/' + ${acc.id} + '/delete'}" method="post" style="display:inline;">
+            <input type="hidden" name="userId" th:value="${userId}" />
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Sil</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS (for modal functionality) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+</body>
+</html>

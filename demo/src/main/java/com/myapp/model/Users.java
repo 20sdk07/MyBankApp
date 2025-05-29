@@ -5,6 +5,8 @@ import java.util.UUID;
 import com.myapp.model.enums.Role;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 
 @Entity
@@ -15,6 +17,7 @@ public class Users {
     private String name;
     private String username;
     private String password;
+    @Enumerated(EnumType.STRING)
     private Role role;
 
     public Users() {

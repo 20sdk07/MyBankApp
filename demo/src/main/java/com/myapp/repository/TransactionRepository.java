@@ -1,32 +1,13 @@
 package com.myapp.repository;
 
-import java.util.ArrayList;
+import com.myapp.model.Transaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 
-import org.springframework.stereotype.Repository;
-
-import com.myapp.model.Transaction;
-
-@Repository
-public class TransactionRepository {
-
-    private final List<Transaction> transactions = new ArrayList<>();
-
-    public void save(Transaction transaction) {
-        transactions.add(transaction);
-    }
-
-    public List<Transaction> findAll() {
-        return transactions;
-    }
-
-    public List<Transaction> findByAccountId(long accountId) {
-        List<Transaction> result = new ArrayList<>();
-        for (Transaction tx : transactions) {
-            if (tx.getFromAccount().getId() == accountId || tx.getToAccount().getId() == accountId) {
-                result.add(tx);
-            }
-        }
-        return result;
-    }
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    @Query("SELECT t FROM Transaction t WHERE t.fromAccount.id = :accountId OR t.toAccount.id = :accountId " +
+           "ORDER BY t.timestamp DESC")
+    List<Transaction> findByFromAccount_IdOrToAccount_Id(@Param("accountId") Long accountId, @Param("accountId") Long sameAccountId);
 }
